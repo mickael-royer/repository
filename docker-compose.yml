@@ -1,0 +1,74 @@
+version: '2'
+
+services:
+  registry:
+    restart: always
+    image: registry:2
+    container_name: registry
+    ports:
+      - "5000:5000"
+    volumes:
+      - c:/Data/registry:/var/lib/registry    
+    networks:
+        - frontend
+
+  gogs:
+    restart: always
+    image: gogs/gogs
+    container_name: gogs
+    ports:
+      - "3000:3000"
+      - "3022:22"
+    volumes:
+      - gogs:/data    
+    networks:
+        - frontend
+        - backend
+    depends_on:
+      - postgres
+      
+ 
+  sonarqube:
+    restart: always
+    image: sonarqube:alpine
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+    environment:
+      - SONARQUBE_JDBC_USERNAME=sonar
+      - SONARQUBE_JDBC_PASSWORD=sonar
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://postgres/sonar
+    networks:
+        - frontend
+        - backend
+    depends_on:
+      - postgres
+
+  postgres:
+    restart: always
+    container_name: repo_postgres
+    build: ./postgresql    
+    volumes_from:
+      - data
+    networks:
+        - backend
+    expose:
+      - "5432"
+
+  data:
+    image: postgres:9.6
+    container_name: repo_data
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    networks:
+        - backend
+    command: "true"
+
+networks:
+  frontend:    
+  backend:    
+        
+volumes:
+  gogs:
+  postgres:
